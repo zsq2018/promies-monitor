@@ -6,6 +6,8 @@ from datetime import datetime, timezone, timedelta
 LIST_URL = "https://www.promies.net/promotions?platform=ios"
 STATE = os.environ.get("STATE_FILE", "state.json")
 WEBHOOK = os.environ.get("FEISHU_WEBHOOK", "").strip()
+# 飞书自定义机器人开了「关键词校验」，消息必须含这个词才收得到
+KEYWORD = os.environ.get("FEISHU_KEYWORD", "热点").strip()
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36"
 
 CARD_SPLIT = re.compile(r'<div\s+class="card-container')
@@ -66,6 +68,12 @@ def feishu(text, card=None):
     if not WEBHOOK:
         print("[warn] 未配置 FEISHU_WEBHOOK，跳过推送")
         return False
+    if KEYWORD and KEYWORD not in text:
+        text = f"{text}\n\n{KEYWORD}"
+    if card and KEYWORD:
+        t = card.get("header", {}).get("title", {})
+        if KEYWORD not in (t.get("content") or ""):
+            t["content"] = f"{KEYWORD} · {t.get('content', '')}".strip()
     payload = {"msg_type": "interactive", "card": card} if card else {"msg_type": "text", "content": {"text": text}}
     data = json.dumps(payload, ensure_ascii=False).encode()
     req = urllib.request.Request(WEBHOOK, data=data, headers={"Content-Type": "application/json"})
@@ -82,6 +90,17 @@ def feishu(text, card=None):
 def main():
     bj = timezone(timedelta(hours=8))
     now = datetime.now(bj).strftime("%m-%d %H:%M")
+
+    # 测试推送：只发一条测试消息，不动快照
+    if os.environ.get("TEST_PUSH", "").lower() in ("1", "true", "yes"):
+        print("[test] 发送测试消息")
+        card = {"config": {"wide_screen_mode": True},
+                "header": {"template": "blue", "title": {"tag": "plain_text", "content": f"{KEYWORD} · Promies 监控已接入 ✅"}},
+                "elements": [{"tag": "div", "text": {"tag": "lark_md",
+                    "content": f"**{KEYWORD}｜测试消息** · {now}\n\nPromies 新码监控已配置成功。\n抓到新活动或补货时，会自动推送到这里。"}}]}
+        ok = feishu("Promies 监控测试", card)
+        print("[test] 推送结果:", "成功" if ok else "失败")
+        return 0 if ok else 1
     try:
         cards = parse(fetch(LIST_URL))
     except Exception as e:
@@ -134,8 +153,8 @@ def main():
     text = "\n".join(lines)
     print(text)
     card = {"config": {"wide_screen_mode": True},
-            "header": {"template": "green", "title": {"tag": "plain_text", "content": "Promies 有新码 🎁"}},
-            "elements": [{"tag": "div", "text": {"tag": "lark_md", "content": text}}]}
+            "header": {"template": "green", "title": {"tag": "plain_text", "content": f"{KEYWORD} · Promies 有新码 🎁"}},
+            "elements": [{"tag": "div", "text": {"tag": "lark_md", "content": text + f"\\n\\n———\\n{KEYWORD}｜Promies 新码监控"}}]}
     feishu(text, card)
     return 0
 
