@@ -1,133 +1,205 @@
 {
  "campaigns": {
   "26a5ddfa-1d4f-43fa-9982-58028a77ce46": {
+   "kind": "lifetime",
    "left": 181,
-   "seen": "10-14 20:41",
+   "offer": "Launch Event - Unlock Lifetime Pro for Free",
+   "seen": "10-14 20:55",
    "store": "https://apps.apple.com/app/apple-store/id6810462504",
    "title": "FreshKeep-Save your groceries",
    "total": 500,
    "uuid": "26a5ddfa-1d4f-43fa-9982-58028a77ce46"
   },
   "27bc4bd0-e688-42a6-b919-f2480bf69e2a": {
+   "kind": "paid",
    "left": 43,
-   "seen": "10-14 20:41",
+   "offer": "An AI-powered keyboard with context-aware replies at 60% off for lifetime",
+   "seen": "10-14 20:55",
    "store": "https://apps.apple.com/app/apple-store/id6778170167",
    "title": "ReePhly: AI Grammar Keyboard",
    "total": 50,
    "uuid": "27bc4bd0-e688-42a6-b919-f2480bf69e2a"
   },
+  "3d73b1ce-95df-44e9-b734-6a007637aba0": {
+   "kind": "oneyear",
+   "left": 113,
+   "offer": "Free use for 1 year",
+   "seen": "10-14 20:55",
+   "store": "https://apps.apple.com/app/apple-store/id6739153151",
+   "title": "Dotly",
+   "total": 200,
+   "uuid": "3d73b1ce-95df-44e9-b734-6a007637aba0"
+  },
+  "5ef62378-0ece-4530-ac90-ad2e5c9c0dd3": {
+   "kind": "lifetime",
+   "left": 110,
+   "offer": "Launch Event - Unlock Lifetime Pro for Free",
+   "seen": "10-14 20:55",
+   "store": "https://apps.apple.com/app/apple-store/id6811471775",
+   "title": "BlurBefore - Redact & Pixelate",
+   "total": 1000,
+   "uuid": "5ef62378-0ece-4530-ac90-ad2e5c9c0dd3"
+  },
   "724b77ef-3bea-4e6f-b6cf-2002f2e669dc": {
+   "kind": "free_unknown",
    "left": 238,
-   "seen": "10-14 20:41",
+   "offer": "Launch perk: 100% free access to all Pro tools",
+   "seen": "10-14 20:55",
    "store": "https://apps.apple.com/app/apple-store/id6757434587",
    "title": "SmartClean: AI Photo & Storage",
    "total": 800,
    "uuid": "724b77ef-3bea-4e6f-b6cf-2002f2e669dc"
   },
   "91410698-6f5f-43b9-9730-6a5023236b52": {
-   "left": 86,
-   "seen": "10-14 20:41",
+   "kind": "free_unknown",
+   "left": 85,
+   "offer": "A cleaning tool built for China only.",
+   "seen": "10-14 20:55",
    "store": "https://apps.apple.com/app/apple-store/id966235360",
    "title": "SmartClean -Cleanup AI 智能清理手机",
    "total": 203,
    "uuid": "91410698-6f5f-43b9-9730-6a5023236b52"
   },
   "91611a29-ff28-4fd8-ae58-42ca51737a79": {
+   "kind": "paid",
    "left": 496,
-   "seen": "10-14 20:41",
+   "offer": "💵 BurnSense Unlimited for just $0.99! Track unlimited subscriptions forever. ⭐️",
+   "seen": "10-14 20:55",
    "store": "https://apps.apple.com/app/apple-store/id6814006317",
    "title": "BurnSense: Track Subscriptions",
    "total": 500,
    "uuid": "91611a29-ff28-4fd8-ae58-42ca51737a79"
   },
+  "922e339e-0e23-4e06-9dca-58a225068cc5": {
+   "kind": "paid",
+   "left": 493,
+   "offer": "Festive Special - 90% Off",
+   "seen": "10-14 20:55",
+   "store": "https://apps.apple.com/app/apple-store/id6778331646",
+   "title": "ProperImage: HEIC to JPG, PDF",
+   "total": 500,
+   "uuid": "922e339e-0e23-4e06-9dca-58a225068cc5"
+  },
   "ac1176ee-5b7b-4474-a714-53ebb3957aa3": {
+   "kind": "paid",
    "left": 200,
-   "seen": "10-14 20:41",
+   "offer": "This Halloween season, unlock SpiritKit Pro — The Sealed Chamber — for $0.99 (normally $3.99). Limited codes.",
+   "seen": "10-14 20:55",
    "store": "https://apps.apple.com/app/apple-store/id6795232196",
    "title": "SpiritKit",
    "total": 200,
    "uuid": "ac1176ee-5b7b-4474-a714-53ebb3957aa3"
   },
   "b2f7f38e-de18-42d4-9909-bbe7ce665c0c": {
+   "kind": "free_unknown",
    "left": 84,
-   "seen": "10-14 20:41",
+   "offer": "Free macOS unlock — full Pro features at $0, available on Mac only (iOS excluded)",
+   "seen": "10-14 20:55",
    "store": "https://apps.apple.com/app/apple-store/id6814300794",
    "title": "Vitrine – Screenshot Maker",
    "total": 1017,
    "uuid": "b2f7f38e-de18-42d4-9909-bbe7ce665c0c"
   },
   "cd44f9c2-b285-41d0-8fc2-1a3f69136c7e": {
-   "left": 204,
-   "seen": "10-14 20:41",
+   "kind": "trial",
+   "left": 203,
+   "offer": "Discount offer: Free trial for one year",
+   "seen": "10-14 20:55",
    "store": "https://apps.apple.com/app/apple-store/id6807451913",
    "title": "Drinkin",
    "total": 300,
    "uuid": "cd44f9c2-b285-41d0-8fc2-1a3f69136c7e"
   },
   "d4924eca-1d41-4e78-8fab-184603c9e5cc": {
+   "kind": "paid",
    "left": 988,
-   "seen": "10-14 20:41",
+   "offer": "Mindful Journal v4.0 - $0.99 Lifetime Premium (Limited to 1000)\r\nMissed the free giveaway? You can still get Lifetime Premium for less than a cup of coffee. Only 1000 codes available at $0.99! Fully offline mood & habit tracker. Pay once, own it forever. No subscriptions.",
+   "seen": "10-14 20:55",
    "store": "https://apps.apple.com/app/apple-store/id6760364709",
    "title": "Mindful Journal: Mood & Habits",
    "total": 1000,
    "uuid": "d4924eca-1d41-4e78-8fab-184603c9e5cc"
   },
   "d59d2a86-fd86-41a6-a81f-e4c72b317187": {
+   "kind": "paid",
    "left": 199,
-   "seen": "10-14 20:41",
+   "offer": "Unlock DEVELOP·LATER Pro —Disposable Cam+ Party roll that develops later no watermark — for $0.99 (normally $9.99). Limited codes.",
+   "seen": "10-14 20:55",
    "store": "https://apps.apple.com/app/apple-store/id6787106097",
    "title": "DEVELOP·LATER: Film Camera",
    "total": 200,
    "uuid": "d59d2a86-fd86-41a6-a81f-e4c72b317187"
   },
   "ef74aca6-6087-4e62-baaa-cc5eb124e733": {
-   "left": 148,
-   "seen": "10-14 20:41",
+   "kind": "lifetime",
+   "left": 147,
+   "offer": "Launch Event - Unlock Lifetime Pro for Free",
+   "seen": "10-14 20:55",
    "store": "https://apps.apple.com/app/apple-store/id6809735042",
    "title": "PickUp - Package Code Manager",
    "total": 497,
    "uuid": "ef74aca6-6087-4e62-baaa-cc5eb124e733"
   },
   "store:https://apps.apple.com/app/apple-store/id6469342311": {
+   "kind": "free_unknown",
    "left": 0,
-   "seen": "10-14 20:41",
+   "offer": "app free",
+   "seen": "10-14 20:55",
    "store": "https://apps.apple.com/app/apple-store/id6469342311",
    "title": "Private Vault:Lock Photos",
    "total": 55,
    "uuid": null
   },
   "store:https://apps.apple.com/app/apple-store/id6760364709": {
+   "kind": "free_unknown",
    "left": 0,
-   "seen": "10-14 20:41",
+   "offer": "Premium Giveaway",
+   "seen": "10-14 20:55",
    "store": "https://apps.apple.com/app/apple-store/id6760364709",
    "title": "Mindful Journal: Mood & Habits",
    "total": 500,
    "uuid": null
   },
   "store:https://apps.apple.com/app/apple-store/id6761100608": {
+   "kind": "free_unknown",
    "left": 0,
-   "seen": "10-14 20:41",
+   "offer": "Truth or Dare: Adult Party Game Gone Free",
+   "seen": "10-14 20:55",
    "store": "https://apps.apple.com/app/apple-store/id6761100608",
    "title": "Truth or Dare: Date Night",
    "total": 1000,
    "uuid": null
   },
   "store:https://apps.apple.com/app/apple-store/id6769677647": {
+   "kind": "free_unknown",
    "left": 0,
-   "seen": "10-14 20:41",
+   "offer": "#1 Application for Couple Conversation - Best for Late Night Conversation with your Partner - Please drop a review it would be a great help",
+   "seen": "10-14 20:55",
    "store": "https://apps.apple.com/app/apple-store/id6769677647",
    "title": "Amo: Couples Questions & Games",
    "total": 499,
    "uuid": null
   },
-  "store:https://apps.apple.com/app/apple-store/id6809535973": {
+  "store:https://apps.apple.com/app/apple-store/id6801329394": {
+   "kind": "unknown",
    "left": 0,
-   "seen": "10-14 20:41",
+   "offer": "Launch Special",
+   "seen": "10-14 20:55",
+   "store": "https://apps.apple.com/app/apple-store/id6801329394",
+   "title": "ZenAlarm: Calendar Alarms",
+   "total": 498,
+   "uuid": null
+  },
+  "store:https://apps.apple.com/app/apple-store/id6809535973": {
+   "kind": "lifetime",
+   "left": 0,
+   "offer": "Launch Event - Unlock Lifetime Pro for Free",
+   "seen": "10-14 20:55",
    "store": "https://apps.apple.com/app/apple-store/id6809535973",
    "title": "PinNote - Notes Always Visible",
    "total": 490,
    "uuid": null
   }
  },
- "updated": "10-14 20:41"
+ "updated": "10-14 20:55"
 }
