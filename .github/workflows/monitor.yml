@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: '*/10 * * * *'
   workflow_dispatch:
+    inputs:
+      test_push:
+        description: '发一条测试消息（不动快照）'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -26,6 +31,7 @@ jobs:
       - name: 运行监控
         env:
           FEISHU_WEBHOOK: ${{ secrets.FEISHU_WEBHOOK }}
+          TEST_PUSH: ${{ inputs.test_push }}
         run: python3 monitor.py
 
       - name: 提交快照
