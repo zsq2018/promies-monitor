@@ -16,22 +16,6 @@
    "total": 50,
    "uuid": "27bc4bd0-e688-42a6-b919-f2480bf69e2a"
   },
-  "3d73b1ce-95df-44e9-b734-6a007637aba0": {
-   "left": 113,
-   "seen": "10-14 20:41",
-   "store": "https://apps.apple.com/app/apple-store/id6739153151",
-   "title": "Dotly",
-   "total": 200,
-   "uuid": "3d73b1ce-95df-44e9-b734-6a007637aba0"
-  },
-  "5ef62378-0ece-4530-ac90-ad2e5c9c0dd3": {
-   "left": 110,
-   "seen": "10-14 20:41",
-   "store": "https://apps.apple.com/app/apple-store/id6811471775",
-   "title": "BlurBefore - Redact & Pixelate",
-   "total": 1000,
-   "uuid": "5ef62378-0ece-4530-ac90-ad2e5c9c0dd3"
-  },
   "724b77ef-3bea-4e6f-b6cf-2002f2e669dc": {
    "left": 238,
    "seen": "10-14 20:41",
@@ -55,14 +39,6 @@
    "title": "BurnSense: Track Subscriptions",
    "total": 500,
    "uuid": "91611a29-ff28-4fd8-ae58-42ca51737a79"
-  },
-  "922e339e-0e23-4e06-9dca-58a225068cc5": {
-   "left": 493,
-   "seen": "10-14 20:41",
-   "store": "https://apps.apple.com/app/apple-store/id6778331646",
-   "title": "ProperImage: HEIC to JPG, PDF",
-   "total": 500,
-   "uuid": "922e339e-0e23-4e06-9dca-58a225068cc5"
   },
   "ac1176ee-5b7b-4474-a714-53ebb3957aa3": {
    "left": 200,
@@ -142,14 +118,6 @@
    "store": "https://apps.apple.com/app/apple-store/id6769677647",
    "title": "Amo: Couples Questions & Games",
    "total": 499,
-   "uuid": null
-  },
-  "store:https://apps.apple.com/app/apple-store/id6801329394": {
-   "left": 0,
-   "seen": "10-14 20:41",
-   "store": "https://apps.apple.com/app/apple-store/id6801329394",
-   "title": "ZenAlarm: Calendar Alarms",
-   "total": 498,
    "uuid": null
   },
   "store:https://apps.apple.com/app/apple-store/id6809535973": {
