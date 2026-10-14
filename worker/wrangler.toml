@@ -1,0 +1,11 @@
+name = "promies-monitor"
+main = "worker.mjs"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+[[r2_buckets]]
+binding = "STATE"
+bucket_name = "promies-monitor-state"
+
+[triggers]
+crons = ["*/10 * * * *"]
