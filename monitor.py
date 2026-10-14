@@ -16,6 +16,9 @@ CNT_RE  = re.compile(r'<span>\s*(\d{1,6})\s*</span>\s*<span>\s*/\s*</span>\s*<sp
 LINK_RE = re.compile(r'href="/promotion/([a-f0-9-]{36})"')
 BADGE_RE= re.compile(r'badge[^>]*>\s*(iOS|Android)\s*<')
 STORE_RE= re.compile(r'href="(https://apps\.apple\.com/[^"]+)"')
+DESC_RE = re.compile(r'text-gray-600 text-sm mb-3[^>]*>\s*([^<]{2,300}?)\s*<')
+BEFORE_RE = re.compile(r'line-through[^>]*>\s*([^<]{1,12}?)\s*<')
+AFTER_RE  = re.compile(r'text-2xl font-bold[^>]*>\s*([^<]{1,12}?)\s*<')
 HOURS_RE= re.compile(r'(\d{1,5})\s*hours? left')
 
 
@@ -39,8 +42,14 @@ def parse(html):
         link = LINK_RE.search(block)
         store = STORE_RE.search(block)
         hrs = HOURS_RE.search(block)
+        desc = DESC_RE.search(block)
+        before = BEFORE_RE.search(block)
+        after = AFTER_RE.search(block)
         cards.append({
             "title": title,
+            "offer": (desc.group(1) if desc else "").replace("&amp;", "&").strip(),
+            "price_before": before.group(1).strip() if before else None,
+            "price_after": after.group(1).strip() if after else None,
             "platform": badge.group(1) if badge else "?",
             "left": int(cnt.group(1)) if cnt else None,
             "total": int(cnt.group(2)) if cnt else None,
@@ -49,6 +58,39 @@ def parse(html):
             "hours_left": int(hrs.group(1)) if hrs else None,
         })
     return cards
+
+
+def price_val(s):
+    """把 'FREE' / '$0.99' / '9.99$' / '0' 归一化成数字；认不出返回 None"""
+    if not s: return None
+    t = str(s).replace("$", "").replace("￥", "").replace(" ", "").strip().lower()
+    if t in ("", "?", "-", "—"): return None
+    if "free" in t or "免费" in t or t in ("0", "0.0", "0.00"): return 0.0
+    m = re.sub(r"[^0-9.]", "", t)
+    try: return float(m)
+    except ValueError: return None
+
+
+def classify(offer, before, after):
+    """判断这个码是不是「终身免费」—— 返回 (类别, 中文标签)
+
+    规则顺序很重要：先看要不要付钱，再看期限，最后才认 lifetime
+    （'at 60% off for lifetime' 含 lifetime 但其实是付费）
+    """
+    d = (offer or "").lower()
+    a = price_val(after)
+
+    if a is not None and a > 0:
+        return "paid", f"❌ 需付费 {after}"
+    if re.search(r"trial|试用|per\s*month|/\s*month|monthly|月度|订阅", d):
+        return "trial", "❌ 试用/订阅"
+    if re.search(r"(^|[^0-9])(1|one)\s*-?\s*year|一年|1\s*年", d):
+        return "oneyear", "❌ 仅 1 年"
+    if re.search(r"lifetime|forever|permanent|永久|终身", d):
+        return "lifetime", "✅ 终身免费"
+    if a == 0:
+        return "free_unknown", "🟡 免费（未标注期限）"
+    return "unknown", "⚪ 信息不足"
 
 
 def load_state():
@@ -121,13 +163,15 @@ def main():
         key = c["uuid"] or ("store:" + (c["store"] or c["title"]))
         prev = known.get(key)
         has_codes = c["left"] is not None and c["left"] > 0
+        c["kind"], c["kind_label"] = classify(c.get("offer"), c.get("price_before"), c.get("price_after"))
         if prev is None:
             if has_codes:
                 fresh.append(c)
         elif has_codes and prev.get("left") is not None and c["left"] > prev["left"]:
             restocked.append((c, prev["left"]))
         known[key] = {"title": c["title"], "left": c["left"], "total": c["total"],
-                      "uuid": c["uuid"], "store": c["store"], "seen": now}
+                      "uuid": c["uuid"], "store": c["store"], "seen": now,
+                      "offer": c.get("offer"), "kind": c.get("kind")}
 
     st["campaigns"] = known
     st["updated"] = now
@@ -140,15 +184,16 @@ def main():
     lines = [f"**Promies 有新码** · {now}"]
     if fresh:
         lines.append(f"\n🆕 **新活动 {len(fresh)} 个**")
-        for c in fresh:
+        for c in sorted(fresh, key=lambda x: {"lifetime":0,"free_unknown":1,"unknown":2}.get(x["kind"],3)):
             left = f"{c['left']}/{c['total']}" if c["left"] is not None else "?"
             url = f"https://www.promies.net/promotion/{c['uuid']}" if c["uuid"] else (c["store"] or "")
-            lines.append(f"· **{c['title']}**  余 {left}\n  {url}")
+            price = f"{c.get('price_before') or '?'} → {c.get('price_after') or '?'}"
+            lines.append(f"· **{c['title']}**  {c['kind_label']}｜{price}｜余 {left}\n  {c.get('offer') or ''}\n  {url}")
     if restocked:
         lines.append(f"\n♻️ **补货 {len(restocked)} 个**")
         for c, before in restocked:
             url = f"https://www.promies.net/promotion/{c['uuid']}" if c["uuid"] else ""
-            lines.append(f"· **{c['title']}**  {before} → **{c['left']}**\n  {url}")
+            lines.append(f"· **{c['title']}**  {c['kind_label']}｜{before} → **{c['left']}**\n  {c.get('offer') or ''}\n  {url}")
 
     text = "\n".join(lines)
     print(text)
