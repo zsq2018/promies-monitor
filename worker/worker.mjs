@@ -13,7 +13,7 @@ const CARD_SPLIT = /<div\s+class="card-container/g;
 const H3_RE    = /<h3[^>]*>([\s\S]*?)<\/h3>/;
 const CNT_RE   = /<span>\s*(\d{1,6})\s*<\/span>\s*<span>\s*\/\s*<\/span>\s*<span>\s*(\d{1,6})\s*<\/span>/;
 const LINK_RE  = /href="\/promotion\/([a-f0-9-]{36})"/;
-const BADGE_RE = /badge[^>]*>\s*(iOS|Android)\s*</;
+const BADGE_RE = /badge[^>]*>\s*([A-Za-z]{2,8})\s*</;
 const STORE_RE = /href="(https:\/\/apps\.apple\.com\/[^"]+)"/;
 const HOURS_RE = /(\d{1,5})\s*hours? left/;
 const DESC_RE  = /text-gray-600 text-sm mb-3[^>]*>\s*([^<]{2,300}?)\s*</;
@@ -66,9 +66,21 @@ export function priceVal(s) {
 export function classify(offer, before, after) {
   const d = String(offer || "").toLowerCase();
   const a = priceVal(after);
+  // 证据串 = offer 文字 + 原价 + 现价（期限词常出现在价格里，如 "$4.99/month → 3 month FREE"）
+  const ev = `${d} ${String(before || "").toLowerCase()} ${String(after || "").toLowerCase()}`;
+
   if (a !== null && a > 0) return ["paid", `❌ 需付费 ${after}`];
-  if (/trial|试用|per\s*month|\/\s*month|monthly|月度|订阅/.test(d)) return ["trial", "❌ 试用/订阅"];
-  if (/(^|[^0-9])(1|one)\s*-?\s*year|一年|1\s*年/.test(d)) return ["oneyear", "❌ 仅 1 年"];
+  // 订阅 / 试用 / 按月
+  if (/trial|试用|per\s*month|\/\s*month|monthly|月度|订阅|subscription/.test(ev)) return ["trial", "❌ 试用/订阅"];
+  if (/\d+\s*-?\s*(month|months|mo\b)/.test(ev) || /a\s+month|first\s+month|months?\s+(of\s+)?free|\d+\s*months?\s*free/.test(ev))
+    return ["trial", "❌ 按月/限期"];
+  if (/annual|yearly/.test(ev)) return ["oneyear", "❌ 仅 1 年（年度）"];
+  // 按年
+  if (/(^|[^0-9])(1|one|a)\s*-?\s*year|一年|1\s*年|12\s*month|twelve\s*month|year\s+subscription/.test(ev))
+    return ["oneyear", "❌ 仅 1 年"];
+  // 按天（90 天等）
+  if (/\d+\s*-?\s*days?\b|(thirty|sixty|ninety)\s+days/.test(ev)) return ["trial", "❌ 限期（按天）"];
+  // 终身
   if (/lifetime|forever|permanent|永久|终身/.test(d)) return ["lifetime", "✅ 终身免费"];
   if (a === 0) return ["free_unknown", "🟡 免费（未标注期限）"];
   return ["unknown", "⚪ 信息不足"];
@@ -149,16 +161,19 @@ async function run(env) {
   const fresh = [];
   const restocked = [];
 
+  const skipped = [];
   for (const c of cards) {
-    if (c.platform !== "iOS") continue;
+    if (/android/i.test(c.platform)) continue;   // 只要 iOS / macOS
     const key = c.uuid || "store:" + (c.store || c.title);
     const [kind, label] = classify(c.offer, c.price_before, c.price_after);
     c.kind = kind;
     c.kind_label = label;
     const prev = known[key];
     const hasCodes = c.left !== null && c.left > 0;
+    const wantIt = c.kind === "lifetime" || c.kind === "free_unknown";
     if (prev === undefined) {
-      if (hasCodes) fresh.push(c);
+      if (hasCodes && wantIt) fresh.push(c);
+      else if (hasCodes) skipped.push(c);
     } else if (hasCodes && prev.left !== null && c.left > prev.left) {
       restocked.push([c, prev.left]);
     }
@@ -181,7 +196,9 @@ async function run(env) {
     heartbeat = `\n[heartbeat] ${fb}`;
   }
 
-  if (!fresh.length && !restocked.length) return `无新活动/补货（${cards.length} 张卡）${heartbeat}`;
+  if (!fresh.length && !restocked.length) {
+    return `无「终身/免费」新活动（${cards.length} 张卡；跳过 ${skipped.length} 个付费/试用/1年）${heartbeat}`;
+  }
 
   // 冷启动保护：一次冒出一堆"新活动"说明是首次运行，发基线而不是刷屏
   if (fresh.length >= 8 && !restocked.length) {
@@ -200,14 +217,14 @@ async function run(env) {
     for (const c of fresh) {
       const left = c.left !== null ? `${c.left}/${c.total}` : "?";
       const url = c.uuid ? `https://www.promies.net/promotion/${c.uuid}` : c.store || "";
-      lines.push(`· **${c.title}**  ${c.kind_label}｜${c.price_before || "?"} → ${c.price_after || "?"}｜余 ${left}\n  ${c.offer || ""}\n  ${url}`);
+      lines.push(`· **${c.title}**  \`${c.platform}\`｜${c.kind_label}｜${c.price_before || "?"} → ${c.price_after || "?"}｜余 ${left}\n  ${c.offer || ""}\n  ${url}`);
     }
   }
   if (restocked.length) {
     lines.push(`\n♻️ **补货 ${restocked.length} 个**`);
     for (const [c, before] of restocked) {
       const url = c.uuid ? `https://www.promies.net/promotion/${c.uuid}` : "";
-      lines.push(`· **${c.title}**  ${c.kind_label}｜${before} → **${c.left}**\n  ${c.offer || ""}\n  ${url}`);
+      lines.push(`· **${c.title}**  \`${c.platform}\`｜${c.kind_label}｜${before} → **${c.left}**\n  ${c.offer || ""}\n  ${url}`);
     }
   }
   const text = lines.join("\n");
