@@ -46,6 +46,7 @@ export function parseCards(html) {
       offer: desc ? strip(desc[1]) : "",
       price_before: before ? before[1].trim() : null,
       price_after: after ? after[1].trim() : null,
+      region: detectRegion(strip(h3[1]), desc ? strip(desc[1]) : ""),
     });
   }
   return out;
@@ -87,6 +88,23 @@ export function classify(offer, before, after) {
 }
 
 const KIND_ORDER = { lifetime: 0, free_unknown: 1, unknown: 2 };
+
+// ---------- 地区/区服识别 ----------
+// 严格规则，避免把英文单词 "us" / "it" 误判成美区/意区
+const REGION_CN = /美区|国区|美服|国服|中国区|美国区|日区|港区|台区|韩区|欧区|國區|美區/;
+const REGION_UP = /\b(US|CN|UK|JP|KR|TW|HK|SG|CA|AU|DE|FR|IT|ES|RU|IN|BR|MX|EU|USA|CHN|JPN|KOR|TWN|HKG)\b/;
+const REGION_LO = /\bfree\s*[-–—:：]\s*(us|cn|uk|jp|kr|tw|hk|sg|ca|au|de|fr|it|es|ru|in|br|mx|eu)\b|\b(us|cn|uk|jp|kr|tw|hk)\s*(?:only|region|store|account)\b|[(（\[【]\s*(us|cn|uk|jp|kr|tw|hk)\s*[)）\]】]/i;
+
+export function detectRegion(title, offer) {
+  const hay = `${title || ""} ${offer || ""}`;
+  const cn = hay.match(REGION_CN);
+  if (cn) return cn[0];
+  const up = hay.match(REGION_UP);
+  if (up) return up[1];
+  const lo = hay.match(REGION_LO);
+  if (lo) return (lo[1] || lo[2] || lo[3] || "").toUpperCase();
+  return null;
+}
 
 function bjParts() {
   const t = new Date(Date.now() + 8 * 3600 * 1000);
@@ -177,7 +195,7 @@ async function run(env) {
     } else if (hasCodes && prev.left !== null && c.left > prev.left) {
       restocked.push([c, prev.left]);
     }
-    known[key] = { title: c.title, left: c.left, total: c.total, uuid: c.uuid, store: c.store, offer: c.offer, kind, seen: now };
+    known[key] = { title: c.title, left: c.left, total: c.total, uuid: c.uuid, store: c.store, offer: c.offer, kind, region: c.region || null, seen: now };
   }
   state.campaigns = known;
   state.updated = now;
@@ -217,14 +235,14 @@ async function run(env) {
     for (const c of fresh) {
       const left = c.left !== null ? `${c.left}/${c.total}` : "?";
       const url = c.uuid ? `https://www.promies.net/promotion/${c.uuid}` : c.store || "";
-      lines.push(`· **${c.title}**  \`${c.platform}\`｜${c.kind_label}｜${c.price_before || "?"} → ${c.price_after || "?"}｜余 ${left}\n  ${c.offer || ""}\n  ${url}`);
+      lines.push(`· **${c.title}**  ${c.region ? `🌍 **仅 ${c.region} 区**｜` : ""}\`${c.platform}\`｜${c.kind_label}｜${c.price_before || "?"} → ${c.price_after || "?"}｜余 ${left}\n  ${c.offer || ""}\n  ${url}`);
     }
   }
   if (restocked.length) {
     lines.push(`\n♻️ **补货 ${restocked.length} 个**`);
     for (const [c, before] of restocked) {
       const url = c.uuid ? `https://www.promies.net/promotion/${c.uuid}` : "";
-      lines.push(`· **${c.title}**  \`${c.platform}\`｜${c.kind_label}｜${before} → **${c.left}**\n  ${c.offer || ""}\n  ${url}`);
+      lines.push(`· **${c.title}**  ${c.region ? `🌍 **仅 ${c.region} 区**｜` : ""}\`${c.platform}\`｜${c.kind_label}｜${before} → **${c.left}**\n  ${c.offer || ""}\n  ${url}`);
     }
   }
   const text = lines.join("\n");
