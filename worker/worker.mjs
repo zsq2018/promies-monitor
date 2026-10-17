@@ -67,27 +67,23 @@ export function priceVal(s) {
 export function classify(offer, before, after) {
   const d = String(offer || "").toLowerCase();
   const a = priceVal(after);
-  // 证据串 = offer 文字 + 原价 + 现价（期限词常出现在价格里，如 "$4.99/month → 3 month FREE"）
   const ev = `${d} ${String(before || "").toLowerCase()} ${String(after || "").toLowerCase()}`;
 
-  if (a !== null && a > 0) return ["paid", `❌ 需付费 ${after}`];
-  // 订阅 / 试用 / 按月
-  if (/trial|试用|per\s*month|\/\s*month|monthly|月度|订阅|subscription/.test(ev)) return ["trial", "❌ 试用/订阅"];
-  if (/\d+\s*-?\s*(month|months|mo\b)/.test(ev) || /a\s+month|first\s+month|months?\s+(of\s+)?free|\d+\s*months?\s*free/.test(ev))
-    return ["trial", "❌ 按月/限期"];
-  if (/annual|yearly/.test(ev)) return ["oneyear", "❌ 仅 1 年（年度）"];
-  // 按年
-  if (/(^|[^0-9])(1|one|a)\s*-?\s*year|一年|1\s*年|12\s*month|twelve\s*month|year\s+subscription/.test(ev))
-    return ["oneyear", "❌ 仅 1 年"];
-  // 按天（90 天等）
-  if (/\d+\s*-?\s*days?\b|(thirty|sixty|ninety)\s+days/.test(ev)) return ["trial", "❌ 限期（按天）"];
-  // 终身
-  if (/lifetime|forever|permanent|永久|终身/.test(d)) return ["lifetime", "✅ 终身免费"];
-  if (a === 0) return ["free_unknown", "🟡 免费（未标注期限）"];
+  if (a !== null && a > 0) return ["paid", "❌ 需付费"];
+  // 订阅 / 试用 / 任何倍数期限 —— 一律不是永久
+  if (/trial|试用|per\s*month|\/\s*month|monthly|月度|订阅|subscription/.test(ev)) return ["trial", "❌ 订阅/试用"];
+  if (/\d+\s*-?\s*(month|months|mo\b|day|days|week|weeks|year|years)/.test(ev)) return ["limited", "❌ 限期"];
+  if (/a\s+month|first\s+(month|week|day|year)|months?\s+(of\s+)?free|annual|yearly|ninety\s+days|twelve\s+month/.test(ev))
+    return ["limited", "❌ 限期"];
+  if (/(^|[^0-9])(1|one|a)\s*-?\s*year|一年|1\s*年|year\s+subscription/.test(ev)) return ["oneyear", "❌ 仅 1 年"];
+  // 只有明确写「永久」才算永久
+  if (/lifetime|forever|permanent|永久|终身/.test(d)) return ["lifetime", "✅ 永久免费"];
+  if (a === 0) return ["free_unknown", "🟡 免费（未注明永久）"];
   return ["unknown", "⚪ 信息不足"];
 }
 
-const KIND_ORDER = { lifetime: 0, free_unknown: 1, unknown: 2 };
+
+const KIND_ORDER = { lifetime: 0, free_unknown: 1, limited: 2, oneyear: 2, trial: 2, paid: 3, unknown: 4 };
 
 // ---------- 地区/区服识别 ----------
 // 严格规则，避免把英文单词 "us" / "it" 误判成美区/意区
@@ -104,6 +100,57 @@ export function detectRegion(title, offer) {
   const lo = hay.match(REGION_LO);
   if (lo) return (lo[1] || lo[2] || lo[3] || "").toUpperCase();
   return null;
+}
+
+/** 抓【详情页 og:description】—— 列表页文案会骗人（同一活动写过 Lifetime，实际是 first month） */
+export async function fetchTrueOffer(uuid) {
+  try {
+    const r = await fetch(`https://www.promies.net/promotion/${uuid}`, {
+      headers: { "user-agent": UA, "accept-language": "zh-CN,zh;q=0.9" },
+    });
+    if (!r.ok) return null;
+    const html = await r.text();
+    const m = html.match(/og:description"\s+content="([^"]+)"/);
+    return m ? strip(m[1]) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+/** 区码归一：美区=US 必须排除；国区/中国区=CN 保留 */
+export function regionCode(raw) {
+  if (!raw) return null;
+  const t = String(raw).trim();
+  const up = t.toUpperCase();
+  if (/国区|中国区|中國區|國區/.test(t) || up === "CN" || up === "CHN") return "CN";
+  if (/美区|美區|美国区|美國區/.test(t) || up === "US" || up === "USA") return "US";
+  return up;
+}
+
+/** 英文文案 → 中文（词表式，够判断"是不是永久"） */
+const ZH_MAP = [
+  [/unlock(?:ing)?\s+lifetime\s+(?:pro|premium)?\s*(?:for)?\s*free/gi, "免费解锁永久版"],
+  [/lifetime\s+(?:pro|premium|unlock|purchase|access)(?:\s+for\s+free)?/gi, "永久版"],
+  [/\blifetime\b|\bforever\b|\bpermanent\b/gi, "永久"],
+  [/\bgiveaway\b/gi, "免费赠送"],
+  [/\blaunch\s+(?:event|week|month|special)\b/gi, "发布活动"],
+  [/\bfirst\s+month\b/gi, "首月"],
+  [/\bfirst\s+week\b/gi, "首周"],
+  [/\bfirst\s+day\b/gi, "首日"],
+  [/\btrial\b/gi, "试用"],
+  [/\bsubscription\b/gi, "订阅"],
+  [/\bmonthly\b/gi, "按月"],
+  [/\byearly\b|\bannual\b/gi, "按年"],
+  [/\bdiscount\b/gi, "折扣"],
+  [/\boff\b/gi, "优惠"],
+  [/\bfor\s+free\b|\bfree\b/gi, "免费"],
+  [/\bpremium\b/gi, "高级版"],
+  [/\bpro\b/gi, "专业版"],
+];
+export function toZh(s) {
+  let t = String(s || "");
+  for (const [re, zh] of ZH_MAP) t = t.replace(re, zh);
+  return t.replace(/\s{2,}/g, " ").replace(/\s+([，。])/g, "$1").trim();
 }
 
 function bjParts() {
@@ -179,23 +226,36 @@ async function run(env) {
   const fresh = [];
   const restocked = [];
 
+  // 并发拉取每个活动的【详情页真实文案】—— 列表页文案会骗人
+  const iosCards = cards.filter((c) => !/android/i.test(c.platform));
+  await Promise.all(iosCards.map(async (c) => {
+    c.true_offer = c.uuid ? await fetchTrueOffer(c.uuid) : null;
+    c.offer_used = c.true_offer || c.offer || "";
+    c.offer_src = c.true_offer ? "详情页" : "列表页·未核实";
+    c.region = detectRegion(c.title, c.offer_used);
+    c.region_code = regionCode(c.region);
+  }));
+
   const skipped = [];
-  for (const c of cards) {
-    if (/android/i.test(c.platform)) continue;   // 只要 iOS / macOS
+  for (const c of iosCards) {
     const key = c.uuid || "store:" + (c.store || c.title);
-    const [kind, label] = classify(c.offer, c.price_before, c.price_after);
+    const [kind, label] = classify(c.offer_used, c.price_before, c.price_after);
     c.kind = kind;
     c.kind_label = label;
     const prev = known[key];
     const hasCodes = c.left !== null && c.left > 0;
-    const wantIt = c.kind === "lifetime" || c.kind === "free_unknown";
+    const cnOk = !c.region_code || c.region_code === "CN";   // 有地区限制且非中国 → 不领不推
+    const wantIt = c.kind === "lifetime" && cnOk;            // 只推【永久 + 中国区/无限制】
     if (prev === undefined) {
       if (hasCodes && wantIt) fresh.push(c);
       else if (hasCodes) skipped.push(c);
-    } else if (hasCodes && prev.left !== null && c.left > prev.left) {
+    } else if (hasCodes && wantIt && prev.left !== null && c.left > prev.left) {
       restocked.push([c, prev.left]);
+    } else if (hasCodes && !wantIt) {
+      skipped.push(c);
     }
-    known[key] = { title: c.title, left: c.left, total: c.total, uuid: c.uuid, store: c.store, offer: c.offer, kind, region: c.region || null, seen: now };
+    known[key] = { title: c.title, left: c.left, total: c.total, uuid: c.uuid, store: c.store,
+                   offer: c.offer_used, offer_src: c.offer_src, kind, region: c.region_code || null, seen: now };
   }
   state.campaigns = known;
   state.updated = now;
@@ -206,16 +266,16 @@ async function run(env) {
   let heartbeat = "";
   if (bj.dow === 1 && bj.hour === 9 && state.last_beat !== bj.ymd) {
     state.last_beat = bj.ymd;
-    const lifeN = Object.values(known).filter((v) => v.kind === "lifetime").length;
+    const lifeN = Object.values(known).filter((v) => v.kind === "lifetime" && (!v.region || v.region === "CN")).length;
     const freeN = Object.values(known).filter((v) => v.kind === "free_unknown").length;
     await env.STATE.put(STATE_KEY, JSON.stringify(state));
     const fb = await pushFeishu(env, "Promies 监控正常 ✅",
-      `**每周自检** · ${now}\n\n· 当前 ${cards.length} 张卡\n· ✅ 终身免费 ${lifeN} 个\n· 🟡 免费未标注 ${freeN} 个\n\n没消息 = 真的没新码，不是掉线了。`);
+      `**每周自检** · ${now}\n\n· 当前 ${cards.length} 张卡\n· ✅ 永久 ${lifeN} 个\n· 🟡 未注明永久 ${freeN} 个\n\n没消息 = 真的没新码，不是掉线了。`);
     heartbeat = `\n[heartbeat] ${fb}`;
   }
 
   if (!fresh.length && !restocked.length) {
-    return `无「终身/免费」新活动（${cards.length} 张卡；跳过 ${skipped.length} 个付费/试用/1年）${heartbeat}`;
+    return `本轮无「永久+中国区」新活动（${cards.length} 张卡；跳过 ${skipped.length} 个非永久/限区）${heartbeat}`;
   }
 
   // 冷启动保护：一次冒出一堆"新活动"说明是首次运行，发基线而不是刷屏
@@ -228,21 +288,22 @@ async function run(env) {
     return `BASELINE\n${text}\n[feishu] ${fb}`;
   }
 
-  const lines = [`**Promies 有新码** · ${now}`];
+  const areaLabel = (c) => (c.region_code ? (c.region_code === "CN" ? "🇨🇳 中国区" : `🌍 ${c.region_code} 区`) : "🌐 无地区限制");
+  const lines = [`**Promies 新码** · ${now}\n只报「✅ 永久」且「中国区/无地区限制」的活动`];
   if (fresh.length) {
     lines.push(`\n🆕 **新活动 ${fresh.length} 个**`);
     fresh.sort((a, b) => (KIND_ORDER[a.kind] ?? 3) - (KIND_ORDER[b.kind] ?? 3));
     for (const c of fresh) {
       const left = c.left !== null ? `${c.left}/${c.total}` : "?";
       const url = c.uuid ? `https://www.promies.net/promotion/${c.uuid}` : c.store || "";
-      lines.push(`· **${c.title}**  ${c.region ? `🌍 **仅 ${c.region} 区**｜` : ""}\`${c.platform}\`｜${c.kind_label}｜${c.price_before || "?"} → ${c.price_after || "?"}｜余 ${left}\n  ${c.offer || ""}\n  ${url}`);
+      lines.push(`· **${c.title}**  \`${c.platform}\`｜${areaLabel(c)}｜${c.kind_label}｜余 ${left}\n  原文（${c.offer_src}）：${c.offer_used || "（无）"}\n  中文：${toZh(c.offer_used) || "（无）"}\n  ${url}`);
     }
   }
   if (restocked.length) {
     lines.push(`\n♻️ **补货 ${restocked.length} 个**`);
     for (const [c, before] of restocked) {
       const url = c.uuid ? `https://www.promies.net/promotion/${c.uuid}` : "";
-      lines.push(`· **${c.title}**  ${c.region ? `🌍 **仅 ${c.region} 区**｜` : ""}\`${c.platform}\`｜${c.kind_label}｜${before} → **${c.left}**\n  ${c.offer || ""}\n  ${url}`);
+      lines.push(`· **${c.title}**  \`${c.platform}\`｜${areaLabel(c)}｜${c.kind_label}｜${before} → **${c.left}**\n  原文（${c.offer_src}）：${c.offer_used || "（无）"}\n  中文：${toZh(c.offer_used) || "（无）"}\n  ${url}`);
     }
   }
   const text = lines.join("\n");
